@@ -13,7 +13,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hannah.holdem"
     },
     "android": {
       "adaptiveIcon": {
@@ -25,6 +26,22 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ],
+      [
+        "react-native-device-activity",
+        {
+          "appGroup": "group.com.hannah.holdem"
+        }
+      ]
+    ]
   }
 }
