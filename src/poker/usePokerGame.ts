@@ -32,15 +32,13 @@ export type PokerSnapshot = {
 
 const HUMAN_SEAT = 0;
 const STARTING_CHIPS = 1000;
-const PLAYER_NAMES = ['You', 'Mina', 'Theo'];
+const PLAYER_NAMES = ['You', 'Mina', 'Theo', 'Ivy', 'Max'];
 
 type PokerTable = InstanceType<typeof Table>;
 
 function createTable() {
-  const table = new Table({ smallBlind: 10, bigBlind: 20 }, 3);
-  table.sitDown(0, STARTING_CHIPS);
-  table.sitDown(1, STARTING_CHIPS);
-  table.sitDown(2, STARTING_CHIPS);
+  const table = new Table({ smallBlind: 10, bigBlind: 20 }, PLAYER_NAMES.length);
+  PLAYER_NAMES.forEach((_, seat) => table.sitDown(seat, STARTING_CHIPS));
   table.startHand(0);
   return table;
 }

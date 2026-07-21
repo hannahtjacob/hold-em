@@ -43,28 +43,27 @@ export function ProfileScreen() {
       </View>
 
       <View style={styles.table}>
-        <View style={styles.botRow}>
-          <PlayerSeat
-            active={snapshot.currentPlayer === 1}
-            cards={snapshot.holeCards[1]}
-            dealer={snapshot.button === 1}
-            name={playerNames[1]}
-            player={snapshot.seats[1]}
-            reveal={!snapshot.handInProgress}
-          />
-          <PlayerSeat
-            active={snapshot.currentPlayer === 2}
-            cards={snapshot.holeCards[2]}
-            dealer={snapshot.button === 2}
-            name={playerNames[2]}
-            player={snapshot.seats[2]}
-            reveal={!snapshot.handInProgress}
-          />
+        <View style={styles.botGrid}>
+          {playerNames.slice(1).map((name, index) => {
+            const seat = index + 1;
+
+            return (
+              <PlayerSeat
+                active={snapshot.currentPlayer === seat}
+                cards={snapshot.holeCards[seat]}
+                dealer={snapshot.button === seat}
+                key={name}
+                name={name}
+                player={snapshot.seats[seat]}
+                reveal={!snapshot.handInProgress}
+              />
+            );
+          })}
         </View>
 
         <View style={styles.center}>
           <Text style={styles.round}>{snapshot.round.toUpperCase()}</Text>
-          <Text style={styles.pot}>Pot · {snapshot.pot}</Text>
+          <Text style={styles.pot}>Pot · {formatMoney(snapshot.pot)}</Text>
           <View style={styles.communityCards}>
             {Array.from({ length: 5 }, (_, index) => (
               <Card key={index} card={snapshot.communityCards[index]} compact />
@@ -118,7 +117,7 @@ export function ProfileScreen() {
               disabled={!isHumanTurn || !canRaise}
               label={
                 canRaise && snapshot.minimumBet !== null
-                  ? `${raiseAction === 'bet' ? 'Bet' : 'Raise'} ${snapshot.minimumBet}`
+                  ? `${raiseAction === 'bet' ? 'Bet' : 'Raise'} ${formatMoney(snapshot.minimumBet)}`
                   : 'Raise'
               }
               onPress={() =>
@@ -156,7 +155,7 @@ function PlayerSeat({ active, cards, dealer, name, player, reveal }: PlayerSeatP
         <Text style={styles.seatName}>{name}</Text>
         {dealer && <Text style={styles.dealer}>D</Text>}
       </View>
-      <Text style={styles.stack}>{player ? `${player.stack} chips` : 'Out'}</Text>
+      <Text style={styles.stack}>{player ? formatMoney(player.stack) : 'Out'}</Text>
       <View style={styles.holeCards}>
         {[0, 1].map((index) => (
           <Card
@@ -167,7 +166,9 @@ function PlayerSeat({ active, cards, dealer, name, player, reveal }: PlayerSeatP
           />
         ))}
       </View>
-      {player && player.betSize > 0 && <Text style={styles.bet}>Bet {player.betSize}</Text>}
+      {player && player.betSize > 0 && (
+        <Text style={styles.bet}>Bet {formatMoney(player.betSize)}</Text>
+      )}
     </View>
   );
 }
@@ -227,6 +228,10 @@ function ActionButton({ disabled, label, onPress, tone }: ActionButtonProps) {
   );
 }
 
+function formatMoney(amount: number) {
+  return `$${amount.toLocaleString('en-US')}`;
+}
+
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#081c15',
@@ -269,9 +274,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.28,
     shadowRadius: 14,
   },
-  botRow: {
+  botGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    rowGap: 8,
+    flexWrap: 'wrap',
   },
   center: {
     alignItems: 'center',
@@ -302,7 +309,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
     borderRadius: 14,
     borderWidth: 2,
-    minWidth: 114,
+    minWidth: 112,
     padding: 9,
   },
   activeSeat: {
