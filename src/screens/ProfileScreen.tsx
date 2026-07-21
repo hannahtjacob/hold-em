@@ -1,4 +1,6 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import Slider from '@react-native-community/slider';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import {
@@ -23,9 +25,26 @@ export function ProfileScreen() {
     startNextHand,
     takeAction,
   } = usePokerGame();
+  const [isRaisePickerVisible, setIsRaisePickerVisible] = useState(false);
+  const [raiseAmount, setRaiseAmount] = useState(0);
   const isHumanTurn = snapshot.currentPlayer === humanSeat;
   const raiseAction = snapshot.legalActions.includes('bet') ? 'bet' : 'raise';
   const canRaise = snapshot.legalActions.includes(raiseAction);
+  const currentTableBet = Math.max(
+    0,
+    ...snapshot.seats.map((seat) => seat?.betSize ?? 0),
+  );
+
+  const openRaisePicker = () => {
+    if (snapshot.minimumBet === null || snapshot.maximumBet === null) return;
+    setRaiseAmount(snapshot.minimumBet);
+    setIsRaisePickerVisible(true);
+  };
+
+  const confirmRaise = () => {
+    takeAction(raiseAction as PokerAction, raiseAmount);
+    setIsRaisePickerVisible(false);
+  };
 
   return (
     <ScrollView
@@ -115,14 +134,8 @@ export function ProfileScreen() {
             />
             <ActionButton
               disabled={!isHumanTurn || !canRaise}
-              label={
-                canRaise && snapshot.minimumBet !== null
-                  ? `${raiseAction === 'bet' ? 'Bet' : 'Raise'} ${formatMoney(snapshot.minimumBet)}`
-                  : 'Raise'
-              }
-              onPress={() =>
-                takeAction(raiseAction as PokerAction, snapshot.minimumBet ?? undefined)
-              }
+              label="Raise"
+              onPress={openRaisePicker}
               tone="red"
             />
           </View>
@@ -135,6 +148,63 @@ export function ProfileScreen() {
           </Pressable>
         </View>
       )}
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setIsRaisePickerVisible(false)}
+        transparent
+        visible={isRaisePickerVisible}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.raiseSheet}>
+            <Text style={styles.raiseTitle}>Choose raise amount</Text>
+            <Text style={styles.raiseAmount}>{formatMoney(raiseAmount)}</Text>
+            <Text style={styles.raiseDetail}>
+              {raiseAction === 'raise'
+                ? `Raise by ${formatMoney(Math.max(0, raiseAmount - currentTableBet))}`
+                : `Bet ${formatMoney(raiseAmount)}`}
+            </Text>
+
+            <Slider
+              accessibilityLabel="Raise amount"
+              maximumTrackTintColor="#b9c7c0"
+              maximumValue={snapshot.maximumBet ?? raiseAmount}
+              minimumTrackTintColor="#d62828"
+              minimumValue={snapshot.minimumBet ?? raiseAmount}
+              onValueChange={(value) => setRaiseAmount(Math.round(value))}
+              step={1}
+              thumbTintColor="#d62828"
+              value={raiseAmount}
+            />
+
+            <View style={styles.raiseRange}>
+              <Text style={styles.rangeText}>
+                Min {formatMoney(snapshot.minimumBet ?? raiseAmount)}
+              </Text>
+              <Text style={styles.rangeText}>
+                Max {formatMoney(snapshot.maximumBet ?? raiseAmount)}
+              </Text>
+            </View>
+
+            <View style={styles.modalActions}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setIsRaisePickerVisible(false)}
+                style={[styles.modalButton, styles.cancelButton]}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={confirmRaise}
+                style={[styles.modalButton, styles.confirmButton]}
+              >
+                <Text style={styles.confirmButtonText}>Confirm raise</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -428,6 +498,76 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.75,
+  },
+  modalBackdrop: {
+    backgroundColor: 'rgba(0, 0, 0, 0.62)',
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  raiseSheet: {
+    backgroundColor: '#f7f3e8',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 36,
+  },
+  raiseTitle: {
+    color: '#081c15',
+    fontSize: 21,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  raiseAmount: {
+    color: '#d62828',
+    fontSize: 38,
+    fontWeight: '900',
+    marginTop: 13,
+    textAlign: 'center',
+  },
+  raiseDetail: {
+    color: '#66776f',
+    fontSize: 14,
+    marginBottom: 18,
+    marginTop: 3,
+    textAlign: 'center',
+  },
+  raiseRange: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  rangeText: {
+    color: '#66776f',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 24,
+  },
+  modalButton: {
+    alignItems: 'center',
+    borderRadius: 12,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 49,
+  },
+  cancelButton: {
+    backgroundColor: '#e2e7e2',
+  },
+  cancelButtonText: {
+    color: '#40534a',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  confirmButton: {
+    backgroundColor: '#d62828',
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '800',
   },
   resultCard: {
     alignItems: 'center',
